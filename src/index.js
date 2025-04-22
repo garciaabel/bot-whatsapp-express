@@ -1,16 +1,30 @@
-import http from "http";
-import { config } from "dotenv";
-import app from "./app.js";
-import * as logger from "./utils/logger.js";
+const express = require('express');
+const app = express();
+app.use(express.json());
 
-if (process.env.NODE_ENV !== "production") {
-	config();
-}
-const server = http.createServer(app);
+// Webhook de verificación
+app.get('/webhook', (req, res) => {
+  const verify_token = 'mibottoken';
 
-const PORT = process.env.PORT || 3003;
+  const mode = req.query['hub.mode'];
+  const token = req.query['hub.verify_token'];
+  const challenge = req.query['hub.challenge'];
 
-server.listen(PORT, () => {
-	logger.info(`Server listening at http://localhost:${PORT}`);
-	logger.info(`Access the root route at http://localhost:${PORT}/hello`);
+  if (mode === 'subscribe' && token === verify_token) {
+    console.log('✅ Webhook verificado correctamente');
+    res.status(200).send(challenge);
+  } else {
+    res.sendStatus(403);
+  }
+});
+
+// Webhook de recepción de mensajes
+app.post('/webhook', (req, res) => {
+  console.log('📥 Mensaje recibido:', JSON.stringify(req.body, null, 2));
+  res.sendStatus(200);
+});
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`🚀 Servidor escuchando en el puerto ${PORT}`);
 });
